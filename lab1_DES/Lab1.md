@@ -264,9 +264,9 @@ int main(int argc,char* argv[]){
 
 ### 代码
 
+运行环境：ubuntu 
+
 ```c
-#include <cstdio>
-#include <cstdlib>
 #include<iostream>
 #include<algorithm>
 
