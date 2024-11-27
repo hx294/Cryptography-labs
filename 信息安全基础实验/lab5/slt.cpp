@@ -90,7 +90,7 @@ Pair bytetopoint(std::vector<unsigned char> bytes)
     Pair res;
     
     if(bytes.back() != (unsigned char)4){
-        std::cout << "Your PC = "<< bytes.back() << "PC != 0x04 " << std::endl;
+        std::cout << "Your PC = "<< (int)bytes.back() << "PC != 0x04 " << std::endl;
         exit(-1);
     }
 
@@ -354,7 +354,7 @@ std::vector<unsigned char>  encrypt(std::vector<unsigned char>  M,mpz_class h,mp
         std::cout << "C2= ";
         printbyte(bittobyte(C2));
 
-        // 计算 C3
+        // 计算 C3 = Hash(x2|| M || y2)
         auto y2_bit_M_x2_bit  = y2_bit;
         y2_bit_M_x2_bit.insert(y2_bit_M_x2_bit.end(),M.begin(),M.end());
         y2_bit_M_x2_bit.insert(y2_bit_M_x2_bit.end(),x2_bit.begin(),x2_bit.end());
@@ -364,6 +364,7 @@ std::vector<unsigned char>  encrypt(std::vector<unsigned char>  M,mpz_class h,mp
         printbyte(C3);
         C3 = bytetobit(C3);
 
+        // 输出密文 C = C1 || C2 || C3
         C = C3;
         C.insert(C.end(),C2.begin(),C2.end());
         C.insert(C.end(),C1.begin(),C1.end());
@@ -380,7 +381,12 @@ std::vector<unsigned char>  encrypt(std::vector<unsigned char>  M,mpz_class h,mp
 /* C 是bit 串 
 输出bit串
 */
-std::vector<unsigned char> decrypt(std::vector<unsigned char>  C,mpz_class h,mpz_class n,Pair G,mpz_class d_B,mpz_class p,mpz_class a,mpz_class b,const std::size_t klen){
+std::vector<unsigned char> decrypt(std::vector<unsigned char>  C,mpz_class h,mpz_class n,Pair G,mpz_class d_B,mpz_class p,mpz_class a,mpz_class b){
+    // 密文中提取出 C1 , C2 , C3
+    size_t C1_len;
+    if(bittobyte(C).back() == 0x04) C1_len = 520;
+    size_t klen = C.size()-C1_len - 256;
+    // std::cout << C.size() << ' ' << C1_len << ' ' << klen << std::endl;
     std::vector<unsigned char> C3(C.begin(),C.begin()+256); 
     std::vector<unsigned char> C2(C.begin()+256,C.begin()+256 +klen);
     std::vector<unsigned char> C1(C.begin()+256+klen,C.end());
@@ -484,6 +490,7 @@ int main(){
         for(unsigned char x: raw) M.push_back(x);
         std::reverse(M.begin(),M.end());
         std::size_t klen = raw.length() * 8;
+        std::cout << klen << std::endl;
 
         std::cout << "M = " ;
         printbyte(M);
@@ -505,7 +512,7 @@ int main(){
 
         // 解密
         std::cout << "开始解密...." << std::endl;
-        auto de_M = decrypt(C,h,n,G,d_B,p,a,b,klen);
+        auto de_M = decrypt(C,h,n,G,d_B,p,a,b);
         std::cout << "解密结果为: ";
         printbyte(bittobyte(de_M));
         if(de_M == M) std::cout << "解密成功" << std::endl;
